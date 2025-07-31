@@ -9,18 +9,14 @@ from .models import Order, Payment, OrderProduct
 import json
 import random
 from django.http import HttpResponse
-
-
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 import json
 import random
 from django.http import JsonResponse
 from orders.models import Order, Payment, OrderProduct
 from carts.models import CartItem
 
-import json
-from django.http import JsonResponse
-from orders.models import Order, Payment, OrderProduct
-from carts.models import CartItem
 
 def paymentsView(request):
     if request.method == "POST":
@@ -55,7 +51,7 @@ def paymentsView(request):
         # Move Cart Items to OrderProduct (static)
         cart_items = CartItem.objects.filter(user=request.user)
         for item in cart_items:
-            OrderProduct.objects.create(
+            order_product = OrderProduct.objects.create(
                 order=order,
                 payment=payment,
                 user=request.user,
@@ -64,21 +60,54 @@ def paymentsView(request):
                 product_price=item.product.price,
                 ordered=True,
             )
+
+            # Set product variations (ManyToMany)
+            product_variations = item.variation.all()
+            order_product.variations.set(product_variations)
+
             # Reduce stock
-            item.product.stock -= item.quantity
+            item.product.stock -= item.quantity 
             item.product.save()
+
+            # # cart_items = CartItem.objects.get(id=id)
+            # product_variation = item.variation.all()
+            # orderproduct = OrderProduct.objects.get(id=id)
+            # orderproduct.variations.set(product_variation)
+            # orderproduct.save()
+
+
 
         # Clear Cart
         cart_items.delete()
 
-        # Return static response
-        return JsonResponse({
-            'order_number': order.order_number,
-            'transaction_id': payment.payment_id,
-            'message': 'Order confirmed with static data.'
+        #Send Order Email
+        subject = 'Thank you for your order!'
+        message = render_to_string('order_recieved_email.html', {
+            'user': request.user,
+            'order': order,
         })
+        to_email = request.user.email
+        send_email = EmailMessage(subject, message, to=[to_email])
+        send_email.send()
 
-    return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+
+        # Return static response
+        # return JsonResponse({
+        #     'order_number': order.order_number,
+        #     'transaction_id': payment.payment_id,
+        #     'message': 'Order confirmed with static data.'
+        # })
+        return JsonResponse({
+                'success': True,
+                'message': 'Payment recorded successfully',
+                'order_number': order.order_number,
+                'transaction_id': payment.payment_id,
+            })
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
+
+    # return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 
 def placeOrderView(request, total=0, quantity=0):
@@ -89,7 +118,7 @@ def placeOrderView(request, total=0, quantity=0):
     cart_count = cart_items.count()
     if cart_count <= 0:
         messages.error(request, "Your cart is empty.")
-        return redirect('store')
+        return redirect('shop')
 
     grand_total = 0
     tax = 0
@@ -145,3 +174,31 @@ def placeOrderView(request, total=0, quantity=0):
             return render(request, 'payments.html', context)
     else:
         return redirect('checkout')
+    
+
+def payment_success(request):
+    order_number = request.GET.get('order_number')
+    transaction_id = request.GET.get('payment_id')
+
+    try:
+        order = Order.objects.get(order_number=order_number, is_ordered=True)
+        order_products = OrderProduct.objects.filter(order_id=order.id)
+        sub_total = 0
+        for i in order_products:
+            sub_total += i.product_price * i.quantity
+            # print(i.product)
+        # print(order_products,"-=-=-=-=-=--==-")
+        payment = Payment.objects.get(payment_id=transaction_id)
+        context = {
+            'order': order,
+            'order_date': order.created_at,
+            'ordered_products': order_products,
+            'order_number': order.order_number,
+            'transaction_id': payment.payment_id,
+            'payment_method': payment.payment_method,
+            'payment_status': payment.status,
+            'sub_total': sub_total,
+        }
+        return render(request, 'payment_success.html', context) 
+    except (Payment.DoesNotExist, Order.DoesNotExist):
+        return redirect('home')

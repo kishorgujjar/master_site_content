@@ -168,156 +168,122 @@
     <!-- Page Header Start -->
     <div class="container-fluid bg-secondary mb-5">
         <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 100px">
-            <h1 class="font-weight-semi-bold text-uppercase mb-3">Payment</h1>
+            <h1 class="font-weight-semi-bold text-uppercase mb-3">Order Successful</h1>
             <div class="d-inline-flex">
                 <p class="m-0"><a href="">Home</a></p>
                 <p class="m-0 px-2">-</p>
-                <p class="m-0">Payment</p>
+                <p class="m-0">Order Successful</p>
             </div>
         </div>
     </div>
     <!-- Page Header End -->
+      <!-- Success Message Start -->
+      <div class="container text-center">
+          <div class="card shadow p-4 mb-5 bg-white rounded">
+              <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+              <h2 class="text-success mb-3">Thank you for your purchase!</h2>
+              <p class="lead mb-4">Your order has been placed successfully. We've sent you an email with the order details.</p>
+<!--  -->
+<div class="container mt-5 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8 border rounded p-4 shadow-sm">
 
-    <!-- Cart Start -->
-    <div class="container-fluid pt-3">
-            <h5 class="text-center mb-10">Review Your Order and Make Payment</h5>
-        <div class="row px-xl-5">
-            <div class="col-lg-8 table-responsive mb-5">
-                <!-- Billing Address -->
-                <div class="card">
-                    <h5 class="card-header">Billing Address</h4>
-                    <div class="card-body">
-                        <p class="card-text mb-0">{{ order.full_name }}</p>
-                        <p class="card-text mb-0">{{ order.full_address }}</p>
-                        <p class="card-text mb-0">{{ order.state }}, {{ order.city }}</p>
-                        <p class="card-text mb-0">{{ order.country }}</p>
-                        <p class="card-text mb-0">{{ order.email }}</p>
-                        <p class="card-text mb-0">{{ order.phone }}</p>
+      <!-- Header -->
+      <div class="text-center mb-4">
+        <h4 class="mb-0">Invoice</h4>
+        <small class="text-muted">Thank you for your purchase!</small>
+        <hr>
+      </div>
 
-                    {% if order.order_note %}
-                        <b>Order Note: </b> {{ order.order_note }}
-                    {% endif %}                    
-
-                    </div>
-                </div> 
-                <!-- Payment Method -->
-                 <div class="card">
-                    <h5 class="card-header">Payment Method</h4>
-                    <div class="card-body">
-                        <p class="card-text">PayPal</p>
-                    </div>
-                </div> 
-                <!-- Billing Address -->
-                 <div class="card">
-                    <h5 class="card-header">Review Product</h4>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                        <table class="table table-bordered text-center mb-4">
-                            <thead class="bg-secondary text-dark">
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Product</th>
-                                    <th>Size</th>
-                                    <th>Color</th>
-                                    <th>Price</th>
-                                    <th>Qty</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="align-middle">
-                                {% for cart_item in cart_items %}
-                                <tr>
-                                    <td class="align-middle"><img src="{{ cart_item.product.image.url }}" style="width: 50px;"></td>
-                                    <td class="align-middle">{{ cart_item.product.product_name }}</td>
-                                    <td class="align-middle">
-                                        {% for variation in cart_item.variation.all %}
-                                            {% if variation.variation_category == 'size' %}
-                                                {{ variation.variation_value|capfirst }}
-                                            {% endif %}
-                                        {% endfor %}
-                                    </td>
-                                    <td class="align-middle">
-                                        {% for variation in cart_item.variation.all %}
-                                            {% if variation.variation_category == 'color' %}
-                                                {{ variation.variation_value|capfirst }}
-                                            {% endif %}
-                                        {% endfor %}
-                                    </td>
-                                    <td class="align-middle">${{ cart_item.product.price }}</td>
-                                    <td class="align-middle">{{ cart_item.quantity }}</td>
-                                    <td class="align-middle">${{ cart_item.sub_total }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        </div>
-                    </div>
-                </div> 
-            </div>
-            <div class="col-lg-4">
-                <form class="mb-5" action="">
-                    <div class="input-group">
-                        <input type="text" class="form-control p-4" placeholder="Coupon Code">
-                        <div class="input-group-append">
-                            <button class="btn btn-primary">Apply Coupon</button>
-                        </div>
-                    </div>
-                </form>
-
-                <div class="card border-secondary mb-5">
-                    <div class="card-header bg-secondary border-0">
-                        <h4 class="font-weight-semi-bold m-0">Cart Summary</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3 pt-1">
-                            <h6 class="font-weight-medium">Subtotal</h6>
-                            <h6 class="font-weight-medium">₹{{ total }}</h6>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <h6 class="font-weight-medium">Shipping</h6>
-                            <h6 class="font-weight-medium">₹00</h6>
-                        </div>
-                    </div>
-                    <div class="card-footer border-secondary bg-transparent">
-                        <div class="d-flex justify-content-between mt-2">
-                            <h5 class="font-weight-bold">Total</h5>
-                            <h5 class="font-weight-bold">₹{{ total }}</h5>
-                        </div>
-                        <div class="card-header bg-secondary border-0">
-                        <h4 class="font-weight-semi-bold m-0">Payment</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <div class="custom-control custom-radio">
-                                <input type="radio" class="custom-control-input" name="payment" id="paypal" value="Paypal" required>
-                                <label class="custom-control-label" for="paypal">Paypal</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="custom-control custom-radio">
-                                <input type="radio" class="custom-control-input" name="payment" id="directcheck" value="Direct Check">
-                                <label class="custom-control-label" for="directcheck">Direct Check</label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="custom-control custom-radio">
-                                <input type="radio" class="custom-control-input" name="payment" id="banktransfer" value="Bank Transfer">
-                                <label class="custom-control-label" for="banktransfer">Bank Transfer</label>
-                            </div>
-                        </div>
-                        <button id="makePaymentBtn"  class="btn btn-block btn-primary my-3 py-3" type="submit" name="checkout">Make Payment</button>
-                        <!-- <div class="btn btn-block btn-primary my-3 py-3"> -->
-                        <!-- </div> -->
-                    </div>
-                </div>
-                
-            </div>
+      <!-- Top Info Section -->
+      <div class="row">
+        <!-- Invoice To (Left) -->
+        <div class="col-md-6">
+          <h6>Invoice To</h6>
+          <p class="mb-0"><strong>{{ order.full_name }}</strong></p>
+          <p class="mb-0">{{ order.address_line_1 }}</p>
+          <p class="mb-0">{{ order.city }}, {{ order.state }}</p>
+          <p class="mb-0">{{ order.country }}</p>
         </div>
+
+        <!-- Billing Info (Right) -->
+        <div class="col-md-6 text-md-end mt-4 mt-md-0">
+          <h6>Billing Details</h6>
+          <p class="mb-0"><strong>Invoice No:</strong> INV-{{ order_number }}</p>
+          <p class="mb-0"><strong>Order Date:</strong> {{ order_date }}</p>
+          <p class="mb-0"><strong>Transaction ID:</strong> {{ transaction_id }}</p>
+          <p class="mb-0"><strong>Payment Method:</strong> {{ payment_method }}</p>
+          <p class="mb-0"><strong>Status:</strong> {{ payment_status }}</p>
+        </div>
+      </div>
+
+      <!-- Product Table -->
+      <h6 class="mt-4 mb-2">Products</h6>
+      <table class="table table-sm table-bordered text-center">
+        <thead class="thead-light">
+          <tr>
+            <th>Product</th>
+            <th>Color</th>
+            <th>Size</th>
+            <th>Quantity</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in ordered_products %}
+          <tr>
+            <td>{{ item.product }}</td>
+              {% for var in item.variations.all %}
+                {% if var.variation_category == "color" %}
+                <td>{{ var.variation_value }}</td>
+                {% endif %}
+              {% endfor %}
+
+            <td>
+              {% for var in item.variations.all %}
+                {% if var.variation_category == "size" %}
+                 {{ var.variation_value }}
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>₹{{ item.product_price }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <table class="table table-sm table-bordered">
+        <tbody>
+          <tr><th>Sub Total</th><td>₹{{ sub_total }}</td></tr>
+          <tr><th>Tax</th><td>₹{{ order.tax }}</td></tr>
+          <tr><th>Grand Total</th><td><strong>₹{{ order.order_total }}</strong></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Footer -->
+      <div class="text-center mt-4">
+        <p class="small text-muted">This is a computer-generated invoice. No signature required.</p>
+        <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print Invoice</button>
+      </div>
+
     </div>
-    <!-- Cart End -->
+  </div>
+</div>
 
 
-    <!-- Footer Start -->
+              <a href="{% url 'shop' %}" class="btn btn-primary mr-2">
+                  <i class="fas fa-shopping-bag mr-1"></i>Continue Shopping
+              </a>
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-primary mr-2">
+                  <i class="fas fa-user-circle mr-1"></i>Go to Dashboard
+              </a>
+          </div>
+      </div>
+      <!-- Success Message End -->
+
+ <!-- Footer Start -->
     <div class="container-fluid bg-secondary text-dark mt-5 pt-5">
         <div class="row px-xl-5 pt-5">
             <div class="col-lg-4 col-md-12 mb-5 pr-3 pr-xl-5">
@@ -408,126 +374,3 @@
 </body>
 
 </html>
-
-<script>
-    // function getCookie(name) {
-    //     let cookieValue = null;
-    //     if (document.cookie && document.cookie !== '') {
-    //         const cookies = document.cookie.split(';');
-    //         for (let i = 0; i < cookies.length; i++) {
-    //             const cookie = cookies[i].trim();
-    //             if (cookie.substring(0, name.length + 1) === (name + '=')) {
-    //                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-    //                 break;
-    //             }
-    //         }
-    //     }
-    //     return cookieValue;
-    // }
-
-    // document.getElementById('makePaymentBtn').addEventListener('click', function(e) {
-    //     e.preventDefault();
-
-    //     const selectedPayment = document.querySelector('input[name="payment"]:checked');
-    //     if (!selectedPayment) {
-    //         alert("Please select a payment method.");
-    //         return;
-    //     }
-
-    //     const data = {
-    //         orderID: "{{ order.order_number }}",  // Use dynamic order number from Django template
-    //         transID: "TXN" + Math.floor(Math.random() * 1000000),
-    //         payment_method: selectedPayment.value,
-    //         status: "Completed"
-    //     };
-
-    //     fetch("{% url 'payments' %}", {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'X-CSRFToken': getCookie('csrftoken')
-    //         },
-    //         body: JSON.stringify(data)
-    //     })
-    //     .then(response => {
-    //         if (!response.ok) {
-    //             throw new Error('Network error');
-    //         }
-    //         return response.json();
-    //     })
-    //     .then(data => {
-    //         // Optional: show success alert
-    //         alert(data.message || "Payment completed successfully!");
-    //         window.location.href = "{% url 'success' %}";
-    //     })
-    //     .catch(error => {
-    //         console.error('Error:', error);
-    //         alert("Something went wrong. Please try again.");
-    //     });
-    // });
-
-
-    var redirect_url = "{% url 'success' %}";
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    document.getElementById('makePaymentBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-
-        const selectedPayment = document.querySelector('input[name="payment"]:checked');
-        if (!selectedPayment) {
-            alert("Please select a payment method.");
-            return;
-        }
-
-        const data = {
-            orderID: "{{ order.order_number }}",
-            transID: "TXN" + Math.floor(Math.random() * 1000000),
-            payment_method: selectedPayment.value,
-            status: "Completed"
-        };
-
-        fetch("{% url 'payments' %}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network error');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert(data.message || "Payment completed successfully!");
-
-                const successUrl = redirect_url + '?order_number=' + data.order_number + '&payment_id=' + data.transaction_id;
-                window.location.href = successUrl;
-            } else {
-                alert(data.message || "Payment failed. Please try again.");
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Something went wrong. Please try again.");
-        });
-    });
-
-</script>
