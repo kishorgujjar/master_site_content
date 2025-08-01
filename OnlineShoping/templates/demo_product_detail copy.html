@@ -223,6 +223,11 @@
                                 <i class="far fa-star"></i> {# Empty star #}
                             {% endif %}
                         {% endfor %}
+                        <!-- <small class="fas fa-star"></small>
+                        <small class="fas fa-star"></small>
+                        <small class="fas fa-star"></small>
+                        <small class="fas fa-star-half-alt"></small>
+                        <small class="far fa-star"></small> -->
                     </div>
                     <small class="pt-1">({{ single_product.countReview }} Reviews)</small>
                 </div>
@@ -295,7 +300,7 @@
                 <div class="nav nav-tabs justify-content-center border-secondary mb-4">
                     <a class="nav-item nav-link active" data-toggle="tab" href="#tab-pane-1">Description</a>
                     <a class="nav-item nav-link" data-toggle="tab" href="#tab-pane-2">Information</a>
-                    <a class="nav-item nav-link" data-toggle="tab" href="#tab-pane-3">Reviews ({{ single_product.countReview }})</a>
+                    <a class="nav-item nav-link" data-toggle="tab" href="#tab-pane-3">Reviews (0)</a>
                 </div>
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="tab-pane-1">
@@ -343,23 +348,10 @@
                     </div>
                     <div class="tab-pane fade" id="tab-pane-3">
                         <div class="row">
+                            {{single_product.averageReview}}
                             <div class="col-md-6">
-                                <div class="d-flex mb-3">
-                                    <div class="text-primary mr-4">
-                                        <h4>Customer Reviews</h4>
-                                        {% for i in "12345" %}
-                                            {% if forloop.counter <= single_product.averageReview %}
-                                                <i class="fas fa-star"></i> {# Filled star #}
-                                            {% else %}
-                                                <i class="far fa-star"></i> {# Empty star #}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <small class="pt-1">({{ single_product.countReview }} Reviews)</small>
-                                    </div>
-                                </div>
-
                                 {% for review in reviews %}
-                                <h2 class="mb-2">{{review.subject}}</h2>
+                                <h4 class="mb-4">{{review.subject}}</h4>
                                 <div class="media mb-4">
                                     <img src="{% static 'img/user.jpg' %}" alt="Image" class="img-fluid mr-3 mt-1" style="width: 45px;">
                                     <div class="media-body">
@@ -372,6 +364,12 @@
                                                     <i class="far fa-star"></i> {# Empty star #}
                                                 {% endif %}
                                             {% endfor %}
+                                            <!-- <i class="fas fa-star{% if review.rating == 5 %}-half-o{% elif review.rating %}-o{% endif %}"></i>
+                                            <i class="fas fa-star{% if review.rating == 4 %}-half-o{% elif review.rating %}-o{% endif %}"></i>
+                                            <i class="fas fa-star{% if review.rating == 3 %}-half-o{% elif review.rating %}-o{% endif %}"></i>
+                                            <i class="fas fa-star{% if review.rating == 2 %}-half-o{% elif review.rating %}-o{% endif %}"></i>
+                                            <i class="fas fa-star{% if review.rating == 1 %}-half-o{% elif review.rating %}-o{% endif %}"></i> -->
+                                            
                                         </div>
                                         <p>{{review.review}}</p>
                                     </div>

@@ -5,10 +5,11 @@ from django.db.models import Q
 from django.core.mail import send_mail, BadHeaderError
 from smtplib import SMTPException
 from django.contrib import messages
-from shop.models import Product, Variation
+from shop.models import Product, ReviewRating
 from accounts.models import Contact
 from category.models import Category
 from carts.models import Cart, CartItem
+from orders.models import OrderProduct
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger 
 from django.contrib.auth.decorators import login_required
 
@@ -73,38 +74,31 @@ def shopView(request):
 
     return render(request, 'shop.html', context)
 
-
-# def priceFilterView(request):
-#     # Get selected prices from GET parameters
-#     selected_prices = request.GET.getlist('price')
-#     print(selected_prices,"-=-=-=-=-=-=---=-=")
-
-#     if selected_prices:
-#         products = Product.objects.filter(price__in=selected_prices)
-#     else:
-#         products = Product.objects.all()
-
-#     all_prices = Product.objects.values_list('price', flat=True).distinct().order_by('price')
-
-#     context = {
-#         'products': products,
-#         'all_prices': all_prices,
-#         'selected_prices': selected_prices  # Add this line
-#     }
-
-#     return render(request, 'order.html', context)
-
-
 def productDetailView(request, product_id):
     try:
         single_product = Product.objects.get(id=product_id)
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request), product=single_product)
     except Exception as e:
         raise e
+
+    if request.user.is_authenticated:
+        try: 
+            orderProduct = OrderProduct.objects.filter(user=request.user, product_id=single_product.id).exists()
+        except OrderProduct.DoesNotExist: 
+            orderProduct = None
+    else:
+        orderProduct = None
     
+
+    # get product reviews
+
+    reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)
+ 
     context = {
         'single_product': single_product,
         'in_cart': in_cart,
+        'orderProduct': orderProduct,
+        'reviews': reviews,
     }
     return render(request, 'product_detail.html', context)
 
