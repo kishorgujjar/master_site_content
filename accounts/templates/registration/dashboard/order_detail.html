@@ -66,7 +66,7 @@
                 </a>
             </div>
             <div class="col-lg-6 col-6 text-left">
-                <form>
+                <form action="">
                     <div class="input-group">
                         <input type="text" class="form-control" placeholder="Search for products">
                         <div class="input-group-append">
@@ -154,7 +154,7 @@
                         <small class="title text-muted">Welcome {{ user.first_name }}!</small>
                         <div class="navbar-nav py-0">
                             <a href="#" class="nav-link">Dashboard</a>
-                            <a href="{% url 'logout' %}" class="nav-item nav-link">Logout</a>
+                            <!-- <a href="" class="nav-item nav-link">Logout</a> -->
                         </div>
                         {% endif %}
                     </div>
@@ -168,90 +168,122 @@
     <!-- Page Header Start -->
     <div class="container-fluid bg-secondary mb-5">
         <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 100px">
-            <h1 class="font-weight-semi-bold text-uppercase mb-3">Contact Us</h1>
+            <h1 class="font-weight-semi-bold text-uppercase mb-3">Order Details</h1>
             <div class="d-inline-flex">
                 <p class="m-0"><a href="{% url 'home' %}">Home</a></p>
                 <p class="m-0 px-2">-</p>
-                <p class="m-0">Contact</p>
+                <p class="m-0">Order Details</p>
             </div>
         </div>
     </div>
     <!-- Page Header End -->
+      <!-- Success Message Start -->
+      <div class="container text-center">
+          <div class="card shadow p-4 mb-5 bg-white rounded">
+              <!-- <i class="fas fa-check-circle fa-4x text-success mb-3"></i> -->
+              <!-- <h2 class="text-success mb-3">Thank you for your purchase!</h2> -->
+              <!-- <p class="lead mb-4">Your order has been placed successfully. We've sent you an email with the order details.</p> -->
+                <!--  -->
+                <div class="container mt-5 mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-10 col-lg-8 border rounded p-4 shadow-sm">
 
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0">Invoice</h4>
+                        <small class="text-muted">Thank you for your purchase!</small>
+                        <hr>
+                    </div>
 
-    <!-- Contact Start -->
-    <div class="container-fluid pt-5">
-        <div class="text-center mb-4">
-            <h2 class="section-title px-5"><span class="px-2">Contact For Any Queries</span></h2>
-        </div>
-        <div class="row px-xl-5">
-            <div class="col-lg-7 mb-5">
-                <div class="contact-form">
-                    <div id="success"></div>
-                    {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-success">{{ message }}</div>
-                    {% endfor %}
-                    {% endif %}
-                
-                <form method="POST" action="{% url 'contact' %}">
-                    {% csrf_token %}
-                    
-                    <div class="control-group">
-                        <input type="text" class="form-control" id="name" name="name" placeholder="Your Name"
-                            required="required" data-validation-required-message="Please enter your name" />
-                        <p class="help-block text-danger"></p>
-                    </div>
-                    
-                    <div class="control-group">
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Your Email"
-                            required="required" data-validation-required-message="Please enter your email" />
-                        <p class="help-block text-danger"></p>
-                    </div>
-                    
-                    <div class="control-group">
-                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Subject"
-                            required="required" data-validation-required-message="Please enter a subject" />
-                        <p class="help-block text-danger"></p>
-                    </div>
-                    
-                    <div class="control-group">
-                        <textarea class="form-control" rows="6" id="message" name="message" placeholder="Message"
-                            required="required" data-validation-required-message="Please enter your message"></textarea>
-                        <p class="help-block text-danger"></p>
-                    </div>
-                    
-                    <div>
-                        <button class="btn btn-primary py-2 px-4" type="submit" id="sendMessageButton">
-                            Send Message
-                        </button>
-                    </div>
-                </form>
+                    <!-- Top Info Section -->
+                    <div class="row">
+                        <!-- Invoice To (Left) -->
+                        <div class="col-md-6">
+                        <h6>Invoice To</h6>
+                        <p class="mb-0"><strong>{{ order.full_name }}</strong></p>
+                        <p class="mb-0">{{ order.address_line_1 }}</p>
+                        <p class="mb-0">{{ order.city }}, {{ order.state }}</p>
+                        <p class="mb-0">{{ order.country }}</p>
+                        </div>
 
+                        <!-- Billing Info (Right) -->
+                        <div class="col-md-6 text-md-end mt-4 mt-md-0">
+                        <h6>Billing Details</h6>
+                        <p class="mb-0"><strong>Invoice No:</strong> INV-{{ order.order_number }}</p>
+                        <p class="mb-0"><strong>Order Date:</strong> {{ order.order_date }}</p>
+                        <p class="mb-0"><strong>Transaction ID:</strong> {{ order_detail.payment.payment_id }}</p>
+                        <p class="mb-0"><strong>Payment Method:</strong> {{ payment_method }}</p>
+                        <p class="mb-0"><strong>Status:</strong> {{ order_detail.payment.status }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Product Table -->
+                    <h6 class="mt-4 mb-2">Products</h6>
+                    <table class="table table-sm table-bordered text-center">
+                        <thead class="thead-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>Color</th>
+                            <th>Size</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in order_detail %}
+                        <tr>
+                            <td>{{ item.product }}</td>
+                            {% for var in item.variations.all %}
+                                {% if var.variation_category == "color" %}
+                                <td>{{ var.variation_value }}</td>
+                                {% endif %}
+                            {% endfor %}
+
+                            <td>
+                            {% for var in item.variations.all %}
+                                {% if var.variation_category == "size" %}
+                                {{ var.variation_value }}
+                                {% endif %}
+                            {% endfor %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ item.product_price }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Totals -->
+                    <table class="table table-sm table-bordered">
+                        <tbody>
+                        <tr><th>Sub Total</th><td>₹{{ subtotal }}</td></tr>
+                        <tr><th>Tax</th><td>₹{{ order.tax }}</td></tr>
+                        <tr><th>Grand Total</th><td><strong>₹{{ order.order_total }}</strong></td></tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Footer -->
+                    <div class="text-center mt-4">
+                        <p class="small text-muted">This is a computer-generated invoice. No signature required.</p>
+                        <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print Invoice</button>
+                    </div>
+
+                    </div>
                 </div>
-            </div>
-            <div class="col-lg-5 mb-5">
-                <h5 class="font-weight-semi-bold mb-3">Get In Touch</h5>
-                <p>Justo sed diam ut sed amet duo amet lorem amet stet sea ipsum, sed duo amet et. Est elitr dolor elitr erat sit sit. Dolor diam et erat clita ipsum justo sed.</p>
-                <div class="d-flex flex-column mb-3">
-                    <h5 class="font-weight-semi-bold mb-3">Store 1</h5>
-                    <p class="mb-2"><i class="fa fa-map-marker-alt text-primary mr-3"></i>123 Street, New York, USA</p>
-                    <p class="mb-2"><i class="fa fa-envelope text-primary mr-3"></i>info@example.com</p>
-                    <p class="mb-2"><i class="fa fa-phone-alt text-primary mr-3"></i>+012 345 67890</p>
                 </div>
-                <div class="d-flex flex-column">
-                    <h5 class="font-weight-semi-bold mb-3">Store 2</h5>
-                    <p class="mb-2"><i class="fa fa-map-marker-alt text-primary mr-3"></i>123 Street, New York, USA</p>
-                    <p class="mb-2"><i class="fa fa-envelope text-primary mr-3"></i>info@example.com</p>
-                    <p class="mb-0"><i class="fa fa-phone-alt text-primary mr-3"></i>+012 345 67890</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Contact End -->
 
 
-    <!-- Footer Start -->
+              <a href="{% url 'shop' %}" class="btn btn-primary mr-2">
+                  <i class="fas fa-shopping-bag mr-1"></i>Continue Shopping
+              </a>
+              <a href="{% url 'dashboard' %}" class="btn btn-outline-primary mr-2">
+                  <i class="fas fa-user-circle mr-1"></i>Go to Dashboard
+              </a>
+          </div>
+      </div>
+      <!-- Success Message End -->
+
+ <!-- Footer Start -->
     <div class="container-fluid bg-secondary text-dark mt-5 pt-5">
         <div class="row px-xl-5 pt-5">
             <div class="col-lg-4 col-md-12 mb-5 pr-3 pr-xl-5">
@@ -268,28 +300,28 @@
                     <div class="col-md-4 mb-5">
                         <h5 class="font-weight-bold text-dark mb-4">Quick Links</h5>
                         <div class="d-flex flex-column justify-content-start">
-                            <a class="text-dark mb-2" href="{% url 'home' %}"><i class="fa fa-angle-right mr-2"></i>Home</a>
-                            <a class="text-dark mb-2" href="{% url 'shop' %}"><i class="fa fa-angle-right mr-2"></i>Our Shop</a>
-                            <a class="text-dark mb-2" href="detail.html"><i class="fa fa-angle-right mr-2"></i>Product Detail</a>
-                            <a class="text-dark mb-2" href="{% url 'cart' %}"><i class="fa fa-angle-right mr-2"></i>Shopping Cart</a>
-                            <a class="text-dark mb-2" href="{% url 'checkout' %}"><i class="fa fa-angle-right mr-2"></i>Checkout</a>
-                            <a class="text-dark" href="{% url 'contact' %}"><i class="fa fa-angle-right mr-2"></i>Contact Us</a>
+                            <a class="text-dark mb-2" href="index.html"><i class="fa fa-angle-right mr-2"></i>Home</a>
+                            <a class="text-dark mb-2" href="shop.html"><i class="fa fa-angle-right mr-2"></i>Our Shop</a>
+                            <a class="text-dark mb-2" href="product_detail.html"><i class="fa fa-angle-right mr-2"></i>Product Detail</a>
+                            <a class="text-dark mb-2" href="cart.html"><i class="fa fa-angle-right mr-2"></i>Shopping Cart</a>
+                            <a class="text-dark mb-2" href="checkout.html"><i class="fa fa-angle-right mr-2"></i>Checkout</a>
+                            <a class="text-dark" href="contact.html"><i class="fa fa-angle-right mr-2"></i>Contact Us</a>
                         </div>
                     </div>
                     <div class="col-md-4 mb-5">
                         <h5 class="font-weight-bold text-dark mb-4">Quick Links</h5>
                         <div class="d-flex flex-column justify-content-start">
-                            <a class="text-dark mb-2" href="{% url 'home' %}"><i class="fa fa-angle-right mr-2"></i>Home</a>
-                            <a class="text-dark mb-2" href="{% url 'shop' %}"><i class="fa fa-angle-right mr-2"></i>Our Shop</a>
-                            <a class="text-dark mb-2" href="detail.html"><i class="fa fa-angle-right mr-2"></i>Product Detail</a>
-                            <a class="text-dark mb-2" href="{% url 'cart' %}"><i class="fa fa-angle-right mr-2"></i>Shopping Cart</a>
-                            <a class="text-dark mb-2" href="{% url 'checkout' %}"><i class="fa fa-angle-right mr-2"></i>Checkout</a>
-                            <a class="text-dark" href="{% url 'contact' %}"><i class="fa fa-angle-right mr-2"></i>Contact Us</a>
+                            <a class="text-dark mb-2" href="index.html"><i class="fa fa-angle-right mr-2"></i>Home</a>
+                            <a class="text-dark mb-2" href="shop.html"><i class="fa fa-angle-right mr-2"></i>Our Shop</a>
+                            <a class="text-dark mb-2" href="product_detail.html"><i class="fa fa-angle-right mr-2"></i>Product Detail</a>
+                            <a class="text-dark mb-2" href="cart.html"><i class="fa fa-angle-right mr-2"></i>Shopping Cart</a>
+                            <a class="text-dark mb-2" href="checkout.html"><i class="fa fa-angle-right mr-2"></i>Checkout</a>
+                            <a class="text-dark" href="contact.html"><i class="fa fa-angle-right mr-2"></i>Contact Us</a>
                         </div>
                     </div>
                     <div class="col-md-4 mb-5">
                         <h5 class="font-weight-bold text-dark mb-4">Newsletter</h5>
-                        <form>
+                        <form action="">
                             <div class="form-group">
                                 <input type="text" class="form-control border-0 py-4" placeholder="Your Name" required="required" />
                             </div>
@@ -303,6 +335,19 @@
                         </form>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="row border-top border-light mx-xl-5 py-4">
+            <div class="col-md-6 px-xl-0">
+                <p class="mb-md-0 text-center text-md-left text-dark">
+                    &copy; <a class="text-dark font-weight-semi-bold" href="#">Your Site Name</a>. All Rights Reserved. 
+					
+					<!--/*** This template is free as long as you keep the footer author’s credit link/attribution link/backlink. If you'd like to use the template without the footer author’s credit link/attribution link/backlink, you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". Thank you for your support. ***/-->
+					Designed by <a class="text-dark font-weight-semi-bold" href="https://htmlcodex.com">HTML Codex</a>
+                </p>
+            </div>
+            <div class="col-md-6 px-xl-0 text-center text-md-right">
+                <img class="img-fluid" src="{% static 'img/payments.png' %}" alt="">
             </div>
         </div>
     </div>
@@ -325,6 +370,7 @@
 
     <!-- Template Javascript -->
     <script src="{% static 'js/main.js' %}"></script>
+
 </body>
 
 </html>

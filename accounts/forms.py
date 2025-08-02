@@ -1,5 +1,8 @@
 from django import forms
 from .models import Account
+from .models import UserProfile
+from django.contrib.auth.models import User
+
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={
@@ -42,3 +45,62 @@ class UserRegistrationForm(forms.ModelForm):
             )
 
         return cleaned_data
+    
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'First Name',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter your first name'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Last Name',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter your last name'
+            }),
+        }
+
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['address_line_1', 'address_line_2', 'city', 'state', 'country', 'profile_picture']
+        widgets = {
+            'address_line_1': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Address Line 1',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter address line 1'
+            }),
+            'address_line_2': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Address Line 2',
+            }),
+            'city': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'City',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter your city'
+            }),
+            'state': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'State',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter your state'
+            }),
+            'country': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Country',
+                'required': 'required',
+                'data-validation-required-message': 'Please enter your country'
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'form-control'
+            }),
+        }

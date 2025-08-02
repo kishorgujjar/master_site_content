@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.core.mail import send_mail, BadHeaderError
 from smtplib import SMTPException
 from django.contrib import messages
-from shop.models import Product, ReviewRating
+from shop.models import Product, ReviewRating, ProductGallery
 from accounts.models import Contact
 from category.models import Category
 from carts.models import Cart, CartItem
@@ -20,7 +20,7 @@ def _cart_id(request):
     return cart
 
 def homeView(request):
-    products = Product.objects.all().filter(is_available=True)
+    products = Product.objects.all().filter(is_available=True).order_by('created_date')
     category = Category.objects.all()
 
     CATID = request.GET.get('categories')  # from the URL ?categories=1
@@ -29,9 +29,14 @@ def homeView(request):
     else:
         products = Product.objects.all()
     
+    for product in products:
+        reviews = ReviewRating.objects.filter(product_id=product.id, status=True)
+
+    
     context = {
         'category' : category,
-        'products' : products
+        'products' : products,
+        'reviews': reviews,
     }
     return render(request, 'home.html', context)
 
@@ -93,12 +98,16 @@ def productDetailView(request, product_id):
     # get product reviews
 
     reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)
+
+    # product gallery
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
  
     context = {
         'single_product': single_product,
         'in_cart': in_cart,
         'orderProduct': orderProduct,
         'reviews': reviews,
+        'product_gallery': product_gallery,
     }
     return render(request, 'product_detail.html', context)
 

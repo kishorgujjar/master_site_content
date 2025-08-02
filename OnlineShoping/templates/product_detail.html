@@ -189,28 +189,47 @@
             {% csrf_token %}
         <div class="row px-xl-5">
             <div class="col-lg-5 pb-5">
-                <div id="product-carousel" class="carousel slide" data-ride="carousel">
-                    <div class="carousel-inner border">
-                        <div class="carousel-item active">
-                            <img class="w-100 h-100" src="{{ single_product.image.url }}" alt="Image">
+                <!-- Main Carousel -->
+                    <div id="product-carousel" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner border">
+                            <!-- Main Image -->
+                            <div class="carousel-item active">
+                                <img class="w-100 h-100" src="{{ single_product.image.url }}" alt="Main Image">
+                            </div>
+
+                            <!-- Gallery Images -->
+                            {% for i in product_gallery %}
+                                <div class="carousel-item">
+                                    <img class="w-100 h-100" src="{{ i.image.url }}" alt="Gallery Image">
+                                </div>
+                            {% endfor %}
                         </div>
-                        <div class="carousel-item">
-                            <img class="w-100 h-100" src="{{ single_product.image.url }}" alt="Image">
-                        </div>
-                        <div class="carousel-item">
-                            <img class="w-100 h-100" src="{{ single_product.image.url }}" alt="Image">
-                        </div>
-                        <div class="carousel-item">
-                            <img class="w-100 h-100" src="{{ single_product.image.url }}" alt="Image">
+
+                        <!-- Controls -->
+                        <a class="carousel-control-prev" href="#product-carousel" data-slide="prev">
+                            <i class="fa fa-2x fa-angle-left text-dark"></i>
+                        </a>
+                        <a class="carousel-control-next" href="#product-carousel" data-slide="next">
+                            <i class="fa fa-2x fa-angle-right text-dark"></i>
+                        </a>
+                    </div>
+
+                    <!-- Thumbnail Preview Strip -->
+                    <div class="d-flex justify-content-center mt-3">
+                        <div class="thumb-images d-flex flex-wrap gap-2">
+                            <!-- First Thumbnail -->
+                            <img src="{{ single_product.image.url }}" class="img-thumbnail" width="80" height="80"
+                                data-bs-target="#product-carousel" data-bs-slide-to="0" style="cursor: pointer;">
+
+                            <!-- Gallery Thumbnails -->
+                            {% for i in product_gallery %}
+                                <img src="{{ i.image.url }}" class="img-thumbnail" width="80" height="80"
+                                    data-bs-target="#product-carousel" data-bs-slide-to="{{ forloop.counter }}"
+                                    style="cursor: pointer;">
+                            {% endfor %}
                         </div>
                     </div>
-                    <a class="carousel-control-prev" href="#product-carousel" data-slide="prev">
-                        <i class="fa fa-2x fa-angle-left text-dark"></i>
-                    </a>
-                    <a class="carousel-control-next" href="#product-carousel" data-slide="next">
-                        <i class="fa fa-2x fa-angle-right text-dark"></i>
-                    </a>
-                </div>
+
             </div>
             <div class="col-lg-7 pb-5">
                 <h3 class="font-weight-semi-bold">{{ single_product.product_name }}</h3>

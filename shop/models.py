@@ -74,3 +74,15 @@ class ReviewRating(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class ProductGallery(models.Model):
+    product = models.ForeignKey(Product, default=None, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='shop/products', max_length=225)
+
+    def __str__(self):
+        return self.product.product_name
+
+    class Meta:
+        verbose_name = 'product gallery'
+        verbose_name_plural = 'product gallery'

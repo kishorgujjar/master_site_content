@@ -13,6 +13,10 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
+
+from .forms import EditProfileForm, UserForm
+from .models import UserProfile
+from orders.models import Order, OrderProduct
 import requests
 
 
@@ -38,6 +42,12 @@ def registerView(request):
             user.phone_number = phone_number
             user.save()
 
+            # Create User Profile
+            profile = UserProfile()
+            profile.user_id = user.id
+            profile.profile_picture = 'default/default-user.png'
+            profile.save()
+
             current_site = get_current_site(request)
             subject = 'Please Activate your account'
             message = render_to_string('registration/account_activation_email.html', {
@@ -48,7 +58,7 @@ def registerView(request):
             })
             to_email = EmailMessage(subject, message, to=[user.email])
             to_email.send()
-            return redirect('/login/?command=verification&email=' + email)
+            return redirect('login/?command=verification&email=' + email)
             # return redirect(f'/registration/login/?command=verification&email={email}')
             # messages.success(request, 'Registration successful!')
         else:
@@ -120,7 +130,7 @@ def loginView(request):
                     nextPage = params['next']
                     return redirect(nextPage)
             except:
-                return redirect('dashboard')
+                return redirect('user_details')
         else:
             messages.error(request, 'Invalid email or password.')
             return redirect('login')
@@ -209,4 +219,95 @@ def resetPasswordView(request):
     return render(request, 'registration/resetPassword.html')
 
 def dashboardView(request):
-    return render(request, 'registration/dashboard.html')
+    orders = Order.objects.order_by('-created_at').filter(user_id=request.user.id, is_ordered=True)
+    orders_count = orders.count()
+
+    userprofile = UserProfile.objects.get(user_id=request.user.id)
+
+    context = {
+        'orders_count': orders_count,
+        'userprofile': userprofile,
+    }
+    return render(request, 'registration/dashboard.html', context)
+
+@login_required(login_url = 'login')
+def myOrdersView(request):
+    orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'registration/dashboard/my_orders.html', context)
+
+def dashboardUserDetails(request):
+    return render(request, 'registration/dashboard/dashboard_user_details.html')
+
+def dashboardOrderTracking(request):
+    return render(request, 'registration/dashboard/dashboard_order_tracking.html')
+
+
+def dashboardPaymentDetail(request):
+    return render(request, 'registration/dashboard/dashboard_payment_detail.html')
+
+@login_required(login_url = 'login')
+def editProfile(request):
+    user = request.user
+    user_profile = user.userprofile
+
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=user)
+        profile_form = EditProfileForm(request.POST, request.FILES, instance=user_profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('dashboard')
+    else:
+        user_form = UserForm(instance=user)
+        profile_form = EditProfileForm(instance=user_profile)
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'user_profile': user_profile,
+    }
+    return render(request, 'registration/dashboard/edit_profile.html', context)
+
+@login_required(login_url = 'login')
+def changePassword(request):
+    if request.method == 'POST':
+        current_password = request.POST['current_password']
+        new_password = request.POST['new_password']
+        confirm_password = request.POST['confirm_password']
+
+        user = Account.objects.get(username__exact=request.user.username)
+        if new_password == confirm_password:
+            success = user.check_password(current_password)
+            if success:
+                user.set_password(new_password)
+                user.save()
+                # auth logout request
+                messages.success(request, 'Password Updated Successfully.')
+                return redirect('change_password')
+            else:
+                messages.error(request, 'Please Enter Valid Current Password')
+                return redirect('change_password')
+        else:
+            messages.error(request, 'Password does not match!')
+    return render(request, 'registration/dashboard/change_password.html')
+
+@login_required(login_url = 'login')
+def orderDetails(request, order_id):
+    order_detail = OrderProduct.objects.filter(order__order_number=order_id)
+    order = Order.objects.get(order_number=order_id)
+    subtotal = 0
+    for i in order_detail:
+        subtotal += i.product_price * i.quantity
+
+    context = {
+        'order_detail': order_detail,
+        'order': order,
+        'subtotal': subtotal,
+
+    }
+    return render(request, 'registration/dashboard/order_detail.html', context)

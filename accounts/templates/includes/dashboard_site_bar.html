@@ -1,0 +1,30 @@
+{% load static %}
+<div class="col-lg-3 mb-4">
+    <div class="bg-white shadow-sm rounded p-4">
+        <div class="text-center mb-3">
+            {% if user_profile.profile_picture %}
+                <div class="text-center mb-4">
+                    <img src="{{ user_profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                </div>
+            {% else %}
+                <div class="text-center mb-4">
+                    <img src="{% static 'images/default_profile.png' %}" alt="Default Profile" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                </div>
+            {% endif %}
+            <h6 class="mb-0">{{ user.full_name }}</h6>
+            <small class="text-muted">{{ user.email }}</small>
+            <small class="text-muted">{{ user.phone_number }}</small>
+
+        </div>
+        <hr>
+        <div class="list-group list-group-flush">
+            <a href="{% url 'user_details' %}" class="list-group-item list-group-item-action{% if '/user_details/' in request.path %}active{% endif %}"><i class="fa fa-user mr-2"></i> Profile</a>
+            <a href="{% url 'my_orders' %}" class="list-group-item list-group-item-action{% if '/my_orders/' in request.path %}active{% endif %}"><i class="fa fa-history mr-2"></i> Order History</a>
+            <a href="{% url 'order_tracking' %}" class="list-group-item list-group-item-action{% if '/order_tracking/' in request.path %}active{% endif %}"><i class="fa fa-truck mr-2"></i> Tracking</a>
+            <a href="{% url 'payment_details' %}" class="list-group-item list-group-item-action{% if '/payment_details/' in request.path %}active{% endif %}"><i class="fa fa-credit-card mr-2"></i> Payment</a>
+            <a href="{% url 'edit_profile' %}" class="list-group-item list-group-item-action{% if '/edit_profile/' in request.path %}active{% endif %}"><i class="fa fa-cog mr-2"></i> Edit Profile</a>
+            <a href="{% url 'change_password' %}" class="list-group-item list-group-item-action{% if '/change_password/' in request.path %}active{% endif %}"><i class="fa fa-cog mr-2"></i> Change Password</a>
+            <a href="{% url 'logout' %}" class="list-group-item list-group-item-action text-danger"><i class="fa fa-sign-out-alt mr-2"></i> Logout</a>
+        </div>
+    </div>
+</div>  

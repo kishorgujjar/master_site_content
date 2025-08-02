@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from django.urls import reverse_lazy
+from pathlib import Path
+from decouple import config 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-yw0zy&-rztbjvsp9(xj*r5now*f3oj+ou5gevu2_c9!_wvd8qw'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool) #True
 
 ALLOWED_HOSTS = []
 
@@ -44,17 +47,23 @@ INSTALLED_APPS = [
     'shop',
     'carts',
     'orders',
+    'admin_honeypot',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django_session_timeout.middleware.SessionTimeoutMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SESSION_EXPIRE_SECONDS = 3600  # 1 hour
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
+SESSION_TIMEOUT_REDIRECT = '/accounts/login/'
 
 ROOT_URLCONF = 'ecommerce.urls'
 
@@ -112,13 +121,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = config('LANGUAGE_CODE')
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = config('TIME_ZONE')
 
-USE_I18N = True
+USE_I18N = config('USE_I18N', default=True, cast=bool) #Trueue
 
-USE_TZ = True
+USE_TZ = config('USE_TZ', default=True, cast=bool) #True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -132,6 +141,7 @@ import os
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]  # For dev use
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    # For collectstatic in production
+
 
 # SMTP Configration
 # settings.py
@@ -149,11 +159,11 @@ MESSAGE_TAGS = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'dineshpatil341341@gmail.com'
-EMAIL_HOST_PASSWORD = 'ppfmaovwkcjqojop'  # Use app-specific password
-EMAIL_USE_TLS = True
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')  # Use app-specific password
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 # DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Default primary key field type
