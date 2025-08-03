@@ -62,7 +62,7 @@ def shopView(request):
             pass  # Skip filter if invalid data
 
     # Pagination after all filters
-    paginator = Paginator(products, 3)  # 3 products per page
+    paginator = Paginator(products, 6)  # 3 products per page
     page_number = request.GET.get('page')
     pages_products = paginator.get_page(page_number)
 
@@ -118,7 +118,7 @@ def contactView(request):
         email = request.POST.get('email')
         subject = request.POST.get('subject')
         message = request.POST.get('message')
-        print(message)
+
         contact = Contact(
             name=name,
             email=email,
@@ -126,24 +126,26 @@ def contactView(request):
             message=message,
         )
 
-        subject = subject
-        message = message
-        email_from = settings.EMAIL_HOST_USER
-        # try:
-        send_mail(
-            subject,
-            message,
-            email_from,  # from
-            ['kishorgujjar143@gmail.com'],  # to
-            fail_silently=False,
-        )
-        contact.save()
-    # except (BadHeaderError, SMTPException) as e:
-        # print(f"Mail server error: {e}")
-        messages.error(request, "Sorry Kishor Gujjar, it seems that our mail server is not responding. Please try again later.")
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                ['kishorgujjar143@gmail.com'],
+                fail_silently=False,
+            )
+            contact.save()
+            messages.success(request, f"Thank you, {name}. Your message has been sent successfully!")
+        except (BadHeaderError, SMTPException) as e:
+            print(f"Mail server error: {e}")
+            messages.error(
+                request,
+                f"Sorry {name}, it seems that our mail server is not responding. Please try again later."
+            )
         return redirect('home')
 
-    return render(request, 'contact.html')  # your form HTML page
+    return render(request, 'contact.html')
+
 
 def cartView(request):
     return render(request, 'cart.html')
