@@ -45,7 +45,7 @@ def registerView(request):
             # Create User Profile
             profile = UserProfile()
             profile.user_id = user.id
-            profile.profile_picture = 'default/default-user.png'
+            profile.profile_picture = 'default/default_profile_picture.jpg'
             profile.save()
 
             current_site = get_current_site(request)
@@ -130,7 +130,7 @@ def loginView(request):
                     nextPage = params['next']
                     return redirect(nextPage)
             except:
-                return redirect('user_details')
+                return redirect('dashboard')
         else:
             messages.error(request, 'Invalid email or password.')
             return redirect('login')
@@ -222,31 +222,52 @@ def dashboardView(request):
     orders = Order.objects.order_by('-created_at').filter(user_id=request.user.id, is_ordered=True)
     orders_count = orders.count()
 
-    userprofile = UserProfile.objects.get(user_id=request.user.id)
+    user_profile_image = UserProfile.objects.get(user_id=request.user.id)
 
     context = {
         'orders_count': orders_count,
-        'userprofile': userprofile,
+        'user_profile': user_profile_image,
     }
     return render(request, 'registration/dashboard.html', context)
 
 @login_required(login_url = 'login')
 def myOrdersView(request):
     orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+    user_profile_image = UserProfile.objects.get(user_id=request.user.id)
+
     context = {
         'orders': orders,
+        'user_profile': user_profile_image,
     }
     return render(request, 'registration/dashboard/my_orders.html', context)
 
 def dashboardUserDetails(request):
-    return render(request, 'registration/dashboard/dashboard_user_details.html')
+    # Profile Image Set
+    user_profile_image = UserProfile.objects.get(user_id=request.user.id)
+    
+    context = {
+        'user_profile': user_profile_image,
+    }
+    return render(request, 'registration/dashboard/dashboard_user_details.html', context)
 
 def dashboardOrderTracking(request):
-    return render(request, 'registration/dashboard/dashboard_order_tracking.html')
+    # Profile Image Set
+    user_profile_image = UserProfile.objects.get(user_id=request.user.id)
+    
+    context = {
+        'user_profile': user_profile_image,
+    }
+    return render(request, 'registration/dashboard/dashboard_order_tracking.html', context)
 
 
 def dashboardPaymentDetail(request):
-    return render(request, 'registration/dashboard/dashboard_payment_detail.html')
+    # Profile Image Set
+    user_profile_image = UserProfile.objects.get(user_id=request.user.id)
+    
+    context = {
+        'user_profile': user_profile_image,
+    }
+    return render(request, 'registration/dashboard/dashboard_payment_detail.html', context)
 
 @login_required(login_url = 'login')
 def editProfile(request):
@@ -261,7 +282,7 @@ def editProfile(request):
             user_form.save()
             profile_form.save()
             messages.success(request, 'Your profile has been updated.')
-            return redirect('dashboard')
+            return redirect('edit_profile')
     else:
         user_form = UserForm(instance=user)
         profile_form = EditProfileForm(instance=user_profile)
@@ -299,6 +320,8 @@ def changePassword(request):
 @login_required(login_url = 'login')
 def orderDetails(request, order_id):
     order_detail = OrderProduct.objects.filter(order__order_number=order_id)
+    user_profile_image = user_profile = UserProfile.objects.get(user_id=request.user.id)
+    
     order = Order.objects.get(order_number=order_id)
     subtotal = 0
     for i in order_detail:
@@ -308,6 +331,7 @@ def orderDetails(request, order_id):
         'order_detail': order_detail,
         'order': order,
         'subtotal': subtotal,
+        'user_profile': user_profile_image,
 
     }
     return render(request, 'registration/dashboard/order_detail.html', context)

@@ -2,15 +2,18 @@
 <div class="col-lg-3 mb-4">
     <div class="bg-white shadow-sm rounded p-4">
         <div class="text-center mb-3">
-            {% if user_profile.profile_picture %}
+           {% if user_profile.profile_picture %}
                 <div class="text-center mb-4">
-                    <img src="{{ user_profile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                    <img src="{{ user_profile.profile_picture.url }}" alt="Profile Picture"
+                        class="rounded-circle" width="120" height="120" style="object-fit: cover;">
                 </div>
             {% else %}
                 <div class="text-center mb-4">
-                    <img src="{% static 'images/default_profile.png' %}" alt="Default Profile" class="rounded-circle" width="120" height="120" style="object-fit: cover;">
+                    <img src="/media/default/default_profile_picture.jpg" alt="Default Profile"
+                        class="rounded-circle" width="120" height="120" style="object-fit: cover;">
                 </div>
             {% endif %}
+
             <h6 class="mb-0">{{ user.full_name }}</h6>
             <small class="text-muted">{{ user.email }}</small>
             <small class="text-muted">{{ user.phone_number }}</small>
