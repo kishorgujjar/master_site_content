@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.db.models import Q
 from django.core.mail import send_mail, BadHeaderError
@@ -9,9 +9,11 @@ from shop.models import Product, ReviewRating, ProductGallery
 from accounts.models import Contact
 from category.models import Category
 from carts.models import Cart, CartItem
-from orders.models import OrderProduct
+from orders.models import OrderProduct, Order
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger 
 from django.contrib.auth.decorators import login_required
+
+
 
 def _cart_id(request):
     cart = request.session.session_key

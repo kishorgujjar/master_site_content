@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
-
 {% load static %}
 
 {% block content %}
-  
 
 <!-- Success Message Start -->
 <div class="container text-center">
@@ -12,103 +10,137 @@
         <h2 class="text-success mb-3">Thank you for your purchase!</h2>
         <p class="lead mb-4">Your order has been placed successfully. We've sent you an email with the order details.</p>
 
-            <div class="container mt-5 mb-5">
+        {% if is_paid %}
+            <div class="alert alert-success">✅ Payment confirmed.</div>
+        {% else %}
+            <div class="alert alert-warning">⚠️ Payment not completed. Please contact support.</div>
+        {% endif %}
+
+        <!-- ✅ Invoice Section for Printing -->
+        <div id="invoice-section" class="container mt-5 mb-5">
             <div class="row justify-content-center">
                 <div class="col-md-10 col-lg-8 border rounded p-4 shadow-sm">
 
-                <!-- Header -->
-                <div class="text-center mb-4">
-                    <h4 class="mb-0">Invoice</h4>
-                    <small class="text-muted">Thank you for your purchase!</small>
-                    <hr>
-                </div>
-
-                <!-- Top Info Section -->
-                <div class="row">
-                    <!-- Invoice To (Left) -->
-                    <div class="col-md-6">
-                    <h6>Invoice To</h6>
-                    <p class="mb-0"><strong>{{ order.full_name }}</strong></p>
-                    <p class="mb-0">{{ order.address_line_1 }}</p>
-                    <p class="mb-0">{{ order.city }}, {{ order.state }}</p>
-                    <p class="mb-0">{{ order.country }}</p>
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <h4 class="mb-0">Invoice</h4>
+                        <small class="text-muted">Thank you for your purchase!</small>
+                        <hr>
                     </div>
 
-                    <!-- Billing Info (Right) -->
-                    <div class="col-md-6 text-md-end mt-4 mt-md-0">
-                    <h6>Billing Details</h6>
-                    <p class="mb-0"><strong>Invoice No:</strong> INV-{{ order_number }}</p>
-                    <p class="mb-0"><strong>Order Date:</strong> {{ order_date }}</p>
-                    <p class="mb-0"><strong>Transaction ID:</strong> {{ transaction_id }}</p>
-                    <p class="mb-0"><strong>Payment Method:</strong> {{ payment_method }}</p>
-                    <p class="mb-0"><strong>Status:</strong> {{ payment_status }}</p>
+                    <!-- Top Info Section -->
+                    <div class="row">
+                        <!-- Invoice To (Left) -->
+                        <div class="col-md-6">
+                            <h6>Invoice To</h6>
+                            <p class="mb-0"><strong>{{ order.full_name }}</strong></p>
+                            <p class="mb-0">{{ order.address_line_1 }}</p>
+                            <p class="mb-0">{{ order.city }}, {{ order.state }}</p>
+                            <p class="mb-0">{{ order.country }}</p>
+                        </div>
+
+                        <!-- Billing Info (Right) -->
+                        <div class="col-md-6 text-md-end mt-4 mt-md-0">
+                            <h6>Billing Details</h6>
+                            <p class="mb-0"><strong>Invoice No:</strong> INV-{{ order_number }}</p>
+                            <p class="mb-0"><strong>Order Date:</strong> {{ order_date }}</p>
+                            <p class="mb-0"><strong>Transaction ID:</strong> {{ transaction_id }}</p>
+                            <p class="mb-0"><strong>Payment Method:</strong> {{ payment_method }}</p>
+                            <p class="mb-0"><strong>Status:</strong> {{ payment_status }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Product Table -->
+                    <h6 class="mt-4 mb-2">Products</h6>
+                    <table class="table table-sm table-bordered text-center">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Color</th>
+                                <th>Size</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in ordered_products %}
+                                <tr>
+                                    <td>{{ item.product }}</td>
+                                    
+                                    <!-- Color -->
+                                    <td>
+                                        {% for var in item.variations.all %}
+                                            {% if var.variation_category == "color" %}
+                                                {{ var.variation_value }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+
+                                    <!-- Size -->
+                                    <td>
+                                        {% for var in item.variations.all %}
+                                            {% if var.variation_category == "size" %}
+                                                {{ var.variation_value }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+
+                                    <td>{{ item.quantity }}</td>
+                                    <td>₹{{ item.product_price }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Totals -->
+                    <table class="table table-sm table-bordered">
+                        <tbody>
+                            <tr><th>Sub Total</th><td>₹{{ sub_total }}</td></tr>
+                            <tr><th>Tax</th><td>₹{{ order.tax }}</td></tr>
+                            <tr><th>Grand Total</th><td><strong>₹{{ order.order_total }}</strong></td></tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Footer -->
+                    <div class="text-center mt-4">
+                        <p class="small text-muted">This is a computer-generated invoice. No signature required.</p>
+                        <button onclick="printInvoice()" class="btn btn-outline-dark btn-sm no-print">Print Invoice</button>
                     </div>
                 </div>
-
-                <!-- Product Table -->
-                <h6 class="mt-4 mb-2">Products</h6>
-                <table class="table table-sm table-bordered text-center">
-                    <thead class="thead-light">
-                    <tr>
-                        <th>Product</th>
-                        <th>Color</th>
-                        <th>Size</th>
-                        <th>Quantity</th>
-                        <th>Price</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for item in ordered_products %}
-                    <tr>
-                        <td>{{ item.product }}</td>
-                        {% for var in item.variations.all %}
-                            {% if var.variation_category == "color" %}
-                            <td>{{ var.variation_value }}</td>
-                            {% endif %}
-                        {% endfor %}
-
-                        <td>
-                        {% for var in item.variations.all %}
-                            {% if var.variation_category == "size" %}
-                            {{ var.variation_value }}
-                            {% endif %}
-                        {% endfor %}
-                        </td>
-                        <td>{{ item.quantity }}</td>
-                        <td>₹{{ item.product_price }}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-
-                <!-- Totals -->
-                <table class="table table-sm table-bordered">
-                    <tbody>
-                    <tr><th>Sub Total</th><td>₹{{ sub_total }}</td></tr>
-                    <tr><th>Tax</th><td>₹{{ order.tax }}</td></tr>
-                    <tr><th>Grand Total</th><td><strong>₹{{ order.order_total }}</strong></td></tr>
-                    </tbody>
-                </table>
-
-                <!-- Footer -->
-                <div class="text-center mt-4">
-                    <p class="small text-muted">This is a computer-generated invoice. No signature required.</p>
-                    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">Print Invoice</button>
-                </div>
-
-                </div>
             </div>
-            </div>
+        </div>
 
+        <!-- Buttons -->
+        <a href="{% url 'shop' %}" class="btn btn-primary mr-2 no-print">
+            <i class="fas fa-shopping-bag mr-1"></i>Continue Shopping
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary mr-2 no-print">
+            <i class="fas fa-user-circle mr-1"></i>Go to Dashboard
+        </a>
+    </div>
+</div>
 
-              <a href="{% url 'shop' %}" class="btn btn-primary mr-2">
-                  <i class="fas fa-shopping-bag mr-1"></i>Continue Shopping
-              </a>
-              <a href="{% url 'dashboard' %}" class="btn btn-outline-primary mr-2">
-                  <i class="fas fa-user-circle mr-1"></i>Go to Dashboard
-              </a>
-          </div>
-      </div>
-      <!-- Success Message End -->
+<!-- Print Script -->
+<script>
+    function printInvoice() {
+        const printContent = document.getElementById('invoice-section').innerHTML;
+        const originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = printContent;
+        window.print();
+        document.body.innerHTML = originalContent;
+
+        window.location.reload(); // Restore events and re-render
+    }
+</script>
+
+<!-- Optional: Hide buttons during print -->
+<style>
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+</style>
 
 {% endblock %}

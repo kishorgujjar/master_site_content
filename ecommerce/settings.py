@@ -147,6 +147,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    # For collectstatic in pr
 # settings.py
 
 
+
 MESSAGE_TAGS = {
     messages.DEBUG: 'alert-secondary',
     messages.INFO: 'alert-info',
@@ -170,3 +171,8 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Razorpay Payment Gatway Key Id and Secret key
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
+RAZORPAY_CALLBACK_URL = 'http://127.0.0.1:8000/orders/success/'

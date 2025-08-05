@@ -20,10 +20,19 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderProductInline]
 
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('payment_id', 'user', 'payment_method', 'amount_paid', 'status', 'created_at')
-    list_filter = ('payment_method', 'status')
-    search_fields = ('payment_id', 'user__username')
-
+    list_display = (
+        'user',
+        'payment_method',
+        'amount_paid',
+        'razorpay_payment_id',
+        'status',
+        'is_paid',
+        'created_at',
+    )
+    list_filter = ('payment_method', 'status', 'is_paid')
+    search_fields = ('user__username', 'razorpay_payment_id', 'razorpay_order_id')
+    ordering = ('-created_at',)
+    
 # Register models
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Payment, PaymentAdmin)

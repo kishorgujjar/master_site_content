@@ -2,16 +2,27 @@ from django.db import models
 from accounts.models import Account
 from shop.models import Product, Variation
 
+from django.db import models
+from accounts.models import Account  # adjust this import as per your project
+
 class Payment(models.Model):
     user = models.ForeignKey(Account, on_delete=models.CASCADE)
-    payment_id = models.CharField(max_length=100, blank=True)   # e.g., Razorpay/Paypal ID
-    payment_method = models.CharField(max_length=100)           # e.g., Paypal, COD, Stripe
-    amount_paid = models.CharField(max_length=100)              # Paid amount as string
-    status = models.CharField(max_length=100)                   # e.g., Completed, Pending
+
+    amount_paid = models.CharField(max_length=20, default='0.0')  # Fixed default + added max_length
+
+    razorpay_order_id = models.CharField(max_length=255, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)  # allow blank/null
+    razorpay_signature = models.CharField(max_length=255, null=True, blank=True)
+
+    payment_method = models.CharField(max_length=255, default='unknown')
+    status = models.CharField(max_length=100, default='pending')  # Add default or make nullable
+    is_paid = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.payment_method} - {self.payment_id}"
+        return f"{self.payment_method} - {self.amount_paid}"
+
     
 
 class Order(models.Model):
@@ -23,6 +34,7 @@ class Order(models.Model):
     )
 
     user = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True)
+    razorpay_order_id = models.CharField(max_length=255, blank=True, null=True)  # 👈 Add this
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, blank=True, null=True)
     order_number = models.CharField(max_length=20)
     first_name = models.CharField(max_length=50)

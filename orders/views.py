@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponse
 from carts.models import Cart, CartItem
+from django.http import JsonResponse
 import datetime
 from .forms import OrderForm
 from carts.models import Cart, CartItem
@@ -13,101 +15,16 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 import json
 import random
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from orders.models import Order, Payment, OrderProduct
 from carts.models import CartItem
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+import razorpay
 
 
-def paymentsView(request):
-    if request.method == "POST":
-        body = json.loads(request.body)
-
-        # Static fallback if frontend sends no data
-        orderID = body.get('orderID', 'STATICORDER123')
-        transID = body.get('transID', 'TXNSTATIC123456')
-        payment_method = body.get('payment_method', 'Cash on Delivery')
-        status = body.get('status', 'Completed')
-
-        try:
-            # Get the order with static orderID
-            order = Order.objects.get(user=request.user, is_ordered=False, order_number=orderID)
-        except Order.DoesNotExist:
-            return JsonResponse({'error': 'Order not found.'}, status=404)
-
-        # Save Payment (static values)
-        payment = Payment.objects.create(
-            user=request.user,
-            payment_id=transID,
-            payment_method=payment_method,
-            amount_paid=order.order_total,
-            status=status,
-        )
-
-        # Update Order
-        order.payment = payment
-        order.is_ordered = True
-        order.save()
-
-        # Move Cart Items to OrderProduct (static)
-        cart_items = CartItem.objects.filter(user=request.user)
-        for item in cart_items:
-            order_product = OrderProduct.objects.create(
-                order=order,
-                payment=payment,
-                user=request.user,
-                product=item.product,
-                quantity=item.quantity,
-                product_price=item.product.price,
-                ordered=True,
-            )
-
-            # Set product variations (ManyToMany)
-            product_variations = item.variation.all()
-            order_product.variations.set(product_variations)
-
-            # Reduce stock
-            item.product.stock -= item.quantity 
-            item.product.save()
-
-            # # cart_items = CartItem.objects.get(id=id)
-            # product_variation = item.variation.all()
-            # orderproduct = OrderProduct.objects.get(id=id)
-            # orderproduct.variations.set(product_variation)
-            # orderproduct.save()
-
-
-
-        # Clear Cart
-        cart_items.delete()
-
-        #Send Order Email
-        subject = 'Thank you for your order!'
-        message = render_to_string('order_recieved_email.html', {
-            'user': request.user,
-            'order': order,
-        })
-        to_email = request.user.email
-        send_email = EmailMessage(subject, message, to=[to_email])
-        send_email.send()
-
-
-
-        # Return static response
-        # return JsonResponse({
-        #     'order_number': order.order_number,
-        #     'transaction_id': payment.payment_id,
-        #     'message': 'Order confirmed with static data.'
-        # })
-        return JsonResponse({
-                'success': True,
-                'message': 'Payment recorded successfully',
-                'order_number': order.order_number,
-                'transaction_id': payment.payment_id,
-            })
-
-    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
-
-    # return JsonResponse({'error': 'Invalid request method.'}, status=400)
+client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 
 def placeOrderView(request, total=0, quantity=0):
@@ -174,31 +91,146 @@ def placeOrderView(request, total=0, quantity=0):
             return render(request, 'payments.html', context)
     else:
         return redirect('checkout')
-    
 
-def payment_success(request):
-    order_number = request.GET.get('order_number')
-    transaction_id = request.GET.get('payment_id')
 
-    try:
-        order = Order.objects.get(order_number=order_number, is_ordered=True)
-        order_products = OrderProduct.objects.filter(order_id=order.id)
-        sub_total = 0
-        for i in order_products:
-            sub_total += i.product_price * i.quantity
-            # print(i.product)
-        # print(order_products,"-=-=-=-=-=--==-")
-        payment = Payment.objects.get(payment_id=transaction_id)
-        context = {
-            'order': order,
-            'order_date': order.created_at,
-            'ordered_products': order_products,
+
+@csrf_exempt
+def paymentsView(request):
+    if request.method == "GET":
+        order = Order.objects.filter(user=request.user, is_ordered=False).last()
+        if not order:
+            return JsonResponse({'error': 'No pending order'}, status=404)
+
+        amount_paise = int(order.order_total * 100)
+
+        razorpay_order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "payment_capture": 1,
+            "receipt": f"receipt_{order.order_number}"
+        })
+
+        # ✅ Save razorpay_order_id to the order
+        order.razorpay_order_id = razorpay_order['id']
+        order.save()
+
+        return JsonResponse({
+            'razorpay_order_id': razorpay_order['id'],
+            'amount': amount_paise,
+            'currency': "INR",
             'order_number': order.order_number,
-            'transaction_id': payment.payment_id,
-            'payment_method': payment.payment_method,
-            'payment_status': payment.status,
+            'key_id': settings.RAZORPAY_KEY_ID,
+            'razorpay_callback_url': settings.RAZORPAY_CALLBACK_URL,
+        })
+
+    
+@csrf_exempt
+def paymentSuccessView(request):
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        razorpay_order_id = body.get('razorpay_order_id')
+        razorpay_payment_id = body.get('razorpay_payment_id')
+        razorpay_signature = body.get('razorpay_signature')
+
+        if not all([razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+            return JsonResponse({'error': 'Missing payment details'}, status=400)
+
+        try:
+            # Signature verification
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            }
+            client.utility.verify_payment_signature(params_dict)
+        except Exception:
+            return JsonResponse({'error': 'Signature verification failed'}, status=400)
+
+        try:
+            order = Order.objects.get(user=request.user, razorpay_order_id=razorpay_order_id, is_ordered=False)
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+
+        # Create Payment
+        payment = Payment.objects.create(
+            user=request.user,
+            payment_method="Razorpay",
+            razorpay_order_id=razorpay_order_id,
+            razorpay_payment_id=razorpay_payment_id,
+            razorpay_signature=razorpay_signature,
+            amount_paid=order.order_total,
+            status="Completed",
+            is_paid=True,  # ✅ Set this explicitly
+        )
+
+        # Finalize Order
+        order.payment = payment
+        order.is_ordered = True
+        order.save()
+
+        # Move items to OrderProduct
+        cart_items = CartItem.objects.filter(user=request.user)
+        for item in cart_items:
+            order_product = OrderProduct.objects.create(
+                order=order,
+                payment=payment,
+                user=request.user,
+                product=item.product,
+                quantity=item.quantity,
+                product_price=item.product.price,
+                ordered=True,
+            )
+            order_product.variations.set(item.variation.all())
+            item.product.stock -= item.quantity
+            item.product.save()
+        # cart_items.delete()
+
+        # Send confirmation email
+        subject = 'Thank you for your order!'
+        message = render_to_string('order_recieved_email.html', {
+            'user': request.user,
+            'order': order,
+        })
+        to_email = request.user.email
+        EmailMessage(subject, message, to=[to_email]).send()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Payment successful',
+            'order_number': order.order_number,
+            'transaction_id': payment.razorpay_payment_id,
+        })
+
+    elif request.method == "GET":
+        order_number = request.GET.get('order_number')
+        transaction_id = request.GET.get('payment_id')
+
+        try:
+            order = Order.objects.get(order_number=order_number, is_ordered=True)
+        except Order.DoesNotExist:
+            return HttpResponse("Invalid order.", status=404)
+
+        payment = order.payment
+        ordered_products = OrderProduct.objects.filter(order=order)
+        sub_total = sum(item.product_price * item.quantity for item in ordered_products)
+
+        return render(request, 'payment_success.html', {
+            'order': order,
+            'payment': payment,
+            'ordered_products': ordered_products,
             'sub_total': sub_total,
-        }
-        return render(request, 'payment_success.html', context) 
-    except (Payment.DoesNotExist, Order.DoesNotExist):
-        return redirect('home')
+            'order_number': order.order_number,
+            'order_date': order.created_at.strftime('%d %B %Y, %I:%M %p'),
+            'transaction_id': payment.razorpay_payment_id if payment else transaction_id,
+            'payment_method': payment.payment_method if payment else 'N/A',
+            'payment_status': payment.status if payment else 'Pending',
+            'is_paid': payment.status.lower() == "completed" if payment else False,
+        })
+
+
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
