@@ -14,10 +14,76 @@ from carts.models import Cart, CartItem
 from orders.models import OrderProduct, Order
 from django.contrib.auth.decorators import login_required
 from carts.views import _cart_id
+from django.core.paginator import Paginator
+from .models import Product, Category, Variation
 
+# def shopView(request):
+#     products = Product.objects.filter(is_available=True).order_by('id')
+#     category = Category.objects.all()
+
+#     # Category filter
+#     CATID = request.GET.get('categories')
+#     if CATID:
+#         products = products.filter(category_id=CATID)
+
+#     # Price filter
+#     selected_prices = request.GET.getlist('price')
+#     if selected_prices:
+#         try:
+#             selected_prices_int = [int(price) for price in selected_prices]
+#             products = products.filter(price__in=selected_prices_int)
+#         except ValueError:
+#             pass
+
+#     # Size filter
+#     selected_sizes = request.GET.getlist('size')
+#     if selected_sizes:
+#         products = products.filter(
+#             id__in=Variation.objects.filter(variation_category='size', variation_value__in=selected_sizes)
+#             .values_list('product_id', flat=True)
+#         )
+
+#     # Color filter
+#     selected_colors = request.GET.getlist('color')
+#     if selected_colors:
+#         products = products.filter(
+#             id__in=Variation.objects.filter(variation_category='color', variation_value__in=selected_colors)
+#             .values_list('product_id', flat=True)
+#         )
+
+#     # Pagination
+#     paginator = Paginator(products, 6)
+#     page_number = request.GET.get('page')
+#     pages_products = paginator.get_page(page_number)
+
+#     # For filter sidebar
+#     prices = Product.objects.values_list('price', flat=True).distinct().order_by('price')
+#     sizes = Variation.objects.filter(variation_category='size').values_list('variation_value', flat=True).distinct()
+#     colors = Variation.objects.filter(variation_category='color').values_list('variation_value', flat=True).distinct()
+
+#     context = {
+#         'category': category,
+#         'products': pages_products,
+#         'prices': prices,
+#         'sizes': sizes,
+#         'colors': colors,
+#         'selected_prices': selected_prices,
+#         'selected_sizes': selected_sizes,
+#         'selected_colors': selected_colors,
+#         'product_count': products.count(),
+#     }
+
+#     return render(request, 'shop.html', context)
+
+from django.core.paginator import Paginator
+from django.db.models import Avg
+from .models import Product, Variation, Category
 
 def shopView(request):
-    products = Product.objects.filter(is_available=True).order_by('id')
+    sort = request.GET.get('sort', 'latest')
+
+    # Base queryset: include rating annotation
+    products = Product.objects.filter(is_available=True).annotate(average_rating=Avg('reviews__rating'))
     category = Category.objects.all()
 
     # Category filter
@@ -27,32 +93,61 @@ def shopView(request):
 
     # Price filter
     selected_prices = request.GET.getlist('price')
-    print(selected_prices, "Selected prices (raw)")
-
     if selected_prices:
         try:
             selected_prices_int = [int(price) for price in selected_prices]
             products = products.filter(price__in=selected_prices_int)
         except ValueError:
-            pass  # Skip filter if invalid data
+            pass
 
-    # Pagination after all filters
-    paginator = Paginator(products, 6)  # 3 products per page
+    # Size filter
+    selected_sizes = request.GET.getlist('size')
+    if selected_sizes:
+        products = products.filter(
+            id__in=Variation.objects.filter(variation_category='size', variation_value__in=selected_sizes)
+            .values_list('product_id', flat=True)
+        )
+
+    # Color filter
+    selected_colors = request.GET.getlist('color')
+    if selected_colors:
+        products = products.filter(
+            id__in=Variation.objects.filter(variation_category='color', variation_value__in=selected_colors)
+            .values_list('product_id', flat=True)
+        )
+
+    # Sort logic
+    if sort == 'popularity':
+        products = products.order_by('-views')  # Ensure 'views' field exists on Product
+    elif sort == 'rating':
+        products = products.order_by('-average_rating')
+    else:
+        products = products.order_by('-created_date')  # Default: latest
+
+    # Pagination
+    paginator = Paginator(products, 6)
     page_number = request.GET.get('page')
     pages_products = paginator.get_page(page_number)
 
-    # Unique prices for filter sidebar
+    # For sidebar filters
     prices = Product.objects.values_list('price', flat=True).distinct().order_by('price')
+    sizes = Variation.objects.filter(variation_category='size').values_list('variation_value', flat=True).distinct()
+    colors = Variation.objects.filter(variation_category='color').values_list('variation_value', flat=True).distinct()
 
     context = {
         'category': category,
-        'products': pages_products,  # Paginated filtered products
+        'products': pages_products,
         'prices': prices,
+        'sizes': sizes,
+        'colors': colors,
         'selected_prices': selected_prices,
+        'selected_sizes': selected_sizes,
+        'selected_colors': selected_colors,
         'product_count': products.count(),
     }
 
     return render(request, 'shop.html', context)
+
 
 def productDetailView(request, product_id):
     try:
@@ -112,3 +207,82 @@ def submit_review(request, product_id):
                 return redirect(url)
 
 
+def searchView(request):
+    keyword = request.GET.get('keyword', '').strip()
+    products = Product.objects.none()
+    product_count = 0
+    error_message = ""
+
+    try:
+        products = Product.objects.order_by('-created_date')
+
+        if keyword:
+            words = keyword.split()
+            query = Q()
+            for word in words:
+                query &= Q(product_name__icontains=word) | Q(description__icontains=word)
+
+            products = products.filter(query)
+
+        product_count = products.count()
+
+    except Exception:
+        messages.error("An error occurred while searching. Please try again later.")
+        products = Product.objects.none()
+        product_count = 0
+
+    context = {
+        'products': products,
+        'product_count': product_count,
+        'error_message': error_message,
+    }
+    return render(request, 'shop.html', context)
+
+
+
+# Search Product by Name
+def searchByNameView(request):
+    keyword = request.GET.get('name_keyword', '').strip()
+    products = Product.objects.none()
+    product_count = 0
+    error_message = ""
+
+    try:
+        products = Product.objects.order_by('-created_date')
+
+        if keyword:
+            words = keyword.split()
+            for word in words:
+                products = products.filter(product_name__icontains=word)
+
+        product_count = products.count()
+
+    except Exception:
+        messages.error(request, "An error occurred while searching. Please try again later.")
+        products = Product.objects.none()
+        product_count = 0
+
+    context = {
+        'products': products,
+        'product_count': product_count,
+        'error_message': error_message,
+    }
+    return render(request, 'shop.html', context)
+
+
+def productShortByView(request):
+    sort = request.GET.get('sort', 'latest')
+    products = Product.objects.all()
+
+    if sort == 'popularity':
+        products = products.order_by('-views')  # adjust as per your model
+    elif sort == 'rating':
+        products = products.order_by('-rating')  # adjust as per your model
+    else:
+        products = products.order_by('-created_date')  # default = latest
+
+    context = {
+        'products': products,
+        'product_count': products.count(),
+    }
+    return render(request, 'shop.html', context)

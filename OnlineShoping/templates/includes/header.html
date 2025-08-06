@@ -38,13 +38,20 @@
                 </a>
             </div>
             <div class="col-lg-6 col-6 text-left">
-                <form action="">
+                <form action="{% url 'search' %}" method="GET">
                     <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search for products">
+                        <input type="text" name="keyword" class="form-control" placeholder="Search for products" value="{{ request.GET.keyword }}">
                         <div class="input-group-append">
-                            <span class="input-group-text bg-transparent text-primary">
+                            <button class="input-group-text bg-transparent text-primary" type="submit">
                                 <i class="fa fa-search"></i>
-                            </span>
+                            </button>
+                            
+                            {% if request.GET.keyword %}
+                            <!-- Clear button redirects to the same page without query -->
+                            <a href="{% url 'search' %}" class="input-group-text bg-transparent text-danger" title="Clear Search">
+                                <i class="fa fa-times"></i>
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </form>
