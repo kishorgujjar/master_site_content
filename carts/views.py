@@ -3,9 +3,8 @@ from shop.models import Product, Variation
 from .models import Cart, CartItem
 from django.http import HttpResponse
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
-def cart(request):
-    return render(request, 'cart.html')
 
 # Get or create session cart ID
 def _cart_id(request):
@@ -14,6 +13,8 @@ def _cart_id(request):
         cart = request.session.create()
     return cart
 
+def cart(request):
+    return render(request, 'cart.html')
 
 def add_to_cart(request, product_id):
     current_user = request.user
@@ -190,5 +191,34 @@ def remove_cart_item(request, product_id, cart_item_id):
     return redirect('cart')
 
 
+@login_required(login_url='login')
+def checkoutView(request, total=0, quantity=0, cart_items=None):
+    tax = 0
+    grand_total = 0
 
-# Create your views here.
+    try:
+        if request.user.is_authenticated:
+            cart_items = CartItem.objects.filter(user=request.user, is_active=True)
+        else:
+            cart = Cart.objects.get(cart_id=_cart_id(request))
+            cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+
+        for cart_item in cart_items:
+            total += (cart_item.product.price * cart_item.quantity)
+            quantity += cart_item.quantity
+
+        tax = (2 * total) / 100
+        grand_total = total + tax
+
+    except Cart.DoesNotExist:
+        cart_items = []
+
+    context = {
+        'total': total,
+        'quantity': quantity,
+        'cart_items': cart_items,
+        'grand_total': grand_total,
+        'tax': tax,
+    }
+
+    return render(request, 'checkout.html', context)

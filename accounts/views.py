@@ -13,12 +13,10 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
-
 from .forms import EditProfileForm, UserForm
 from .models import UserProfile
 from orders.models import Order, OrderProduct
 import requests
-
 
 
 def registerView(request):

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="container mt-4">
+        <h2 class="mb-4">Order Page - Filter by Price</h2>
+
+        <form method="get" id="price-filter-form">
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>Filter by Price</h5>
+                    {% for price in all_prices %}
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox"
+                            class="custom-control-input"
+                            id="price-{{ forloop.counter }}"
+                            name="price"
+                            value="{{ price }}"
+                            {% if price|stringformat:"s" in selected_prices %}checked{% endif %}>
+                        <label class="custom-control-label" for="price-{{ forloop.counter }}">
+                            ₹{{ price }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Apply Filter</button>
+                </div>
+                </form>
+
+                <div class="col-md-9">
+                    <div class="row">
+                        {% for product in products %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text">₹{{ product.price }}</p>
+                                    <a href="#" class="btn btn-success">Order Now</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p>No products found for selected price range.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+{% endblock %}
