@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
+
 class MyAccountManager(BaseUserManager):
     def create_user(self, email, username, first_name, last_name, phone_number, password=None):
         if not email:
@@ -32,9 +33,10 @@ class MyAccountManager(BaseUserManager):
         user.is_admin = True
         user.is_staff = True
         user.is_superuser = True
+        user.is_superadmin = True  # keep your custom flag
+        user.is_active = True      # important so superuser can log in
         user.save(using=self._db)
         return user
-
 
 
 class Account(AbstractBaseUser):
@@ -44,21 +46,22 @@ class Account(AbstractBaseUser):
     email = models.EmailField(max_length=100, unique=True)
     phone_number = models.CharField(max_length=50)
 
-    #required
+    # required fields
     date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=True)
-    is_active = models.BooleanField(default=False)
-    is_superadmin = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)   # default False for security
+    is_active = models.BooleanField(default=True)   # default True so user can log in
+    is_superadmin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'phone_number']  # added phone_number
 
-    objects=MyAccountManager()
+    objects = MyAccountManager()
 
     def full_name(self):
         return f'{self.first_name} {self.last_name}'
+
     def __str__(self):
         return self.email
     
@@ -79,6 +82,7 @@ class Contact(models.Model):
     def __str__(self):
         return f"{self.name} - {self.subject}"
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField(Account, on_delete=models.CASCADE)
     address_line_1 = models.CharField(max_length=100, blank=True)
@@ -93,7 +97,3 @@ class UserProfile(models.Model):
     
     def full_address(self):
         return f'{self.address_line_1} {self.address_line_2}'
-
-
-
-
